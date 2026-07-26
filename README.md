@@ -390,6 +390,17 @@ normale Seitenkonsole (F12).
 
 ## Lizenz
 
-Zur freien Verwendung. `lib/readability.js` ist eine Eigenimplementierung des
-Algorithmus; falls du sie durch Mozillas `Readability.js` ersetzt, gilt für
-diese Datei Apache-2.0 und der Lizenztext gehört mit ins Paket.
+Bislang **keine Lizenz vergeben**. Damit gilt automatisch das gesetzliche
+Urheberrecht: alle Rechte vorbehalten. Der Code ist einsehbar, darf aber nicht
+ohne Erlaubnis genutzt, kopiert oder weiterverbreitet werden.
+
+Falls das später geöffnet werden soll, genügt eine `LICENSE`-Datei im
+Projektwurzelverzeichnis — GitHub erkennt sie automatisch und zeigt die Lizenz
+oben im Repository an. MIT wäre für eine Erweiterung dieser Größe die
+naheliegende Wahl.
+
+`lib/readability.js` ist eine Eigenimplementierung des Readability-Algorithmus
+und keine Übernahme fremden Codes — es besteht also derzeit keine Bindung an
+eine fremde Lizenz. Wird sie durch Mozillas `Readability.js` ersetzt, gilt für
+**diese eine Datei** Apache-2.0; deren Lizenztext gehört dann mit ins Paket,
+unabhängig davon, was für den Rest des Projekts gilt.
