@@ -16,6 +16,7 @@
     smartPauses: $('smartPauses'),
     warmup: $('warmup'),
     rememberPosition: $('rememberPosition'),
+    fullscreen: $('fullscreen'),
     theme: $('theme'),
     fontSize: $('fontSize'),
     fontFamily: $('fontFamily'),
@@ -71,6 +72,7 @@
     FIELDS.smartPauses.checked = s.smartPauses;
     FIELDS.warmup.checked = s.warmup;
     FIELDS.rememberPosition.checked = s.rememberPosition;
+    FIELDS.fullscreen.checked = s.fullscreen;
     FIELDS.theme.value = s.theme;
     FIELDS.fontSize.value = s.fontSize;
     FIELDS.pivotColor.value = toHex6(s.pivotColor);
@@ -112,6 +114,7 @@
       smartPauses: FIELDS.smartPauses.checked,
       warmup: FIELDS.warmup.checked,
       rememberPosition: FIELDS.rememberPosition.checked,
+      fullscreen: FIELDS.fullscreen.checked,
       theme: FIELDS.theme.value,
       fontSize: Number(FIELDS.fontSize.value),
       fontFamily,

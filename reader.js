@@ -85,9 +85,14 @@
       this.finished = false;
       this.startedAt = 0;
 
+      this._ownsFullscreen = false;    // haben WIR das Vollbild angefordert?
+      this._pendingFullscreen = false; // Wunsch offen, wartet auf Interaktion
+
       this.host = null;
       this.shadow = null;
       this.el = {};
+      this._ownsFullscreen = false;
+      this._pendingFullscreen = false;
 
       this._onKeyDown = this._onKeyDown.bind(this);
       this._tick = this._tick.bind(this);
@@ -232,6 +237,22 @@
       document.documentElement.style.overflow = 'hidden';
 
       global.addEventListener('keydown', this._onKeyDown, true);
+
+      // Verlaesst der Nutzer das Vollbild ueber F11 oder Esc des Browsers,
+      // soll der Knopf das widerspiegeln.
+      this._onFsChange = () => {
+        this.el.root.classList.toggle('is-fullscreen', this.isFullscreen());
+      };
+      document.addEventListener('fullscreenchange', this._onFsChange);
+
+      // Engines ohne Promise-Rueckgabe melden die Ablehnung nur hierueber.
+      this._onFsError = () => {
+        this._pendingFullscreen = true;
+        console.debug('[FlashRead] Vollbild abgelehnt - wird bei der ersten Interaktion nachgeholt.');
+      };
+      document.addEventListener('fullscreenerror', this._onFsError);
+
+      if (this.settings.fullscreen) await this.enterFullscreen();
     }
 
     static async loadCss() {
@@ -256,6 +277,7 @@
           <div class="fr-title"></div>
           <div class="fr-head-right">
             <span class="fr-source"></span>
+            <button class="fr-icon-btn" data-act="fullscreen" title="Vollbild (F)">&#9974;</button>
             <button class="fr-icon-btn" data-act="options" title="Einstellungen">&#9881;</button>
             <button class="fr-icon-btn" data-act="close" title="Schliessen (Esc)">&#10005;</button>
           </div>
@@ -293,6 +315,7 @@
             <b>Leertaste</b> Pause/Weiter &nbsp;&middot;&nbsp;
             <b>&#8592; &#8594;</b> 10 Woerter &nbsp;&middot;&nbsp;
             <b>&#8593; &#8595;</b> Tempo &plusmn;25 &nbsp;&middot;&nbsp;
+            <b>F</b> Vollbild &nbsp;&middot;&nbsp;
             <b>Esc</b> schliessen
           </div>
         </div>
@@ -323,11 +346,16 @@
 
     bindUi() {
       this.shadow.addEventListener('click', (ev) => {
+        // Jeder Klick im Overlay ist eine Nutzeraktivierung in der Seite -
+        // damit laesst sich ein abgelehntes Vollbild nachtraeglich einloesen.
+        this._consumePendingFullscreen();
+
         const btn = ev.target.closest('[data-act]');
         if (!btn) return;
         ev.stopPropagation();
         switch (btn.dataset.act) {
           case 'close': this.destroy(); break;
+          case 'fullscreen': this.toggleFullscreen(); break;
           case 'options': this.cfg.onOpenOptions && this.cfg.onOpenOptions(); break;
           case 'toggle': this.toggle(); break;
           case 'back': this.seek(-10); break;
@@ -517,8 +545,12 @@
     _onKeyDown(ev) {
       if (!this.host || !this.host.isConnected) return;
 
-      const keys = [' ', 'Spacebar', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+      const keys = [' ', 'Spacebar', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'f', 'F'];
       if (!keys.includes(ev.key)) return;
+
+      // Erste Taste im Overlay zaehlt als Nutzeraktivierung -> falls das
+      // Vollbild beim Oeffnen abgelehnt wurde, jetzt nachholen.
+      this._consumePendingFullscreen();
 
       ev.preventDefault();
       ev.stopPropagation();
@@ -546,7 +578,73 @@
           this.setWpm(this.settings.wpm - 25);
           this.persistWpm();
           break;
+        case 'f':
+        case 'F':
+          this.toggleFullscreen();
+          break;
       }
+    }
+
+    // --- Vollbild ---------------------------------------------------------
+
+    isFullscreen() {
+      return document.fullscreenElement === this.host;
+    }
+
+    /**
+     * Vollbild anfordern.
+     *
+     * Achtung: requestFullscreen verlangt eine "transiente Nutzeraktivierung"
+     * IN DER SEITE. Ein Klick auf das Toolbar-Icon oder Alt+R findet in der
+     * Browser-Oberflaeche statt und zaehlt dafuer nicht - der erste Versuch
+     * beim Oeffnen wird deshalb je nach Browser abgelehnt. In dem Fall merken
+     * wir uns den Wunsch und loesen ihn bei der ersten echten Interaktion im
+     * Overlay ein (Klick oder Tastendruck), also praktisch sofort.
+     */
+    async enterFullscreen() {
+      if (!this.host || this.isFullscreen()) return true;
+      if (typeof this.host.requestFullscreen !== 'function') return false;
+
+      try {
+        // Der Options-Parameter wird von aelteren Engines schlicht ignoriert.
+        const result = this.host.requestFullscreen({ navigationUI: 'hide' });
+        // Aeltere Firefox-Versionen liefern hier `undefined` statt eines
+        // Promise - Fehler kommen dort nur als `fullscreenerror`-Event, das
+        // in mount() mitgehoert wird.
+        if (result && typeof result.then === 'function') await result;
+        this._ownsFullscreen = true;
+        this._pendingFullscreen = false;
+        return true;
+      } catch (err) {
+        this._pendingFullscreen = true;
+        console.debug('[FlashRead] Vollbild braucht eine Interaktion in der Seite:', err && err.message);
+        return false;
+      }
+    }
+
+    async exitFullscreen() {
+      this._pendingFullscreen = false;
+      if (!this.isFullscreen()) return;
+      if (typeof document.exitFullscreen !== 'function') return;
+      try {
+        const result = document.exitFullscreen();
+        if (result && typeof result.then === 'function') await result;
+      } catch (err) {
+        console.debug('[FlashRead] Vollbild konnte nicht beendet werden:', err);
+      }
+      this._ownsFullscreen = false;
+    }
+
+    toggleFullscreen() {
+      if (this.isFullscreen()) this.exitFullscreen();
+      else this.enterFullscreen();
+    }
+
+    /** Beim ersten Klick/Tastendruck den aufgeschobenen Wunsch einloesen. */
+    _consumePendingFullscreen() {
+      if (!this._pendingFullscreen) return;
+      this._pendingFullscreen = false;
+      this.enterFullscreen();
     }
 
     // --- Abbau ------------------------------------------------------------
@@ -555,7 +653,19 @@
       clearTimeout(this.timer);
       this.timer = null;
       this.playing = false;
+      this._pendingFullscreen = false;
+
       global.removeEventListener('keydown', this._onKeyDown, true);
+      if (this._onFsChange) document.removeEventListener('fullscreenchange', this._onFsChange);
+      if (this._onFsError) document.removeEventListener('fullscreenerror', this._onFsError);
+
+      // Vollbild nur beenden, wenn WIR es angefordert haben - war die Seite
+      // vorher schon im Vollbild (z. B. ein Video), bleibt sie es.
+      if (this.isFullscreen()) {
+        document.exitFullscreen().catch(() => { /* egal, Overlay geht trotzdem */ });
+      }
+      this._ownsFullscreen = false;
+
       document.documentElement.style.overflow = this._prevOverflow || '';
       if (!this.finished) this.reportProgress();
       if (this.host && this.host.parentNode) this.host.parentNode.removeChild(this.host);

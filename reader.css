@@ -137,6 +137,20 @@
 
 .fr-icon-btn:hover { background: var(--fr-panel); }
 
+/* Vollbild-Knopf hervorheben, solange das Vollbild aktiv ist */
+.fr-root.is-fullscreen .fr-icon-btn[data-act="fullscreen"] {
+  border-color: var(--fr-pivot-color);
+  color: var(--fr-pivot-color);
+}
+
+/*
+ * Im Vollbild ist das Host-Element selbst das Fullscreen-Element. Manche
+ * Browser geben ihm dann einen schwarzen Standardhintergrund - wir setzen
+ * unseren eigenen, damit das Farbschema erhalten bleibt.
+ */
+:host(:fullscreen) { background: var(--fr-bg, #0f1115); }
+:host(:-webkit-full-screen) { background: var(--fr-bg, #0f1115); }
+
 /* --- Buehne mit dem Wort -------------------------------------------------- */
 
 .fr-stage {

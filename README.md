@@ -38,6 +38,7 @@ Manifest V3 · keine Build-Tools · keine externen Requests · keine Telemetrie.
 | **Anzeige** | Tempo in wpm, Fortschrittsbalken, verbleibende Zeit, Wortposition (z. B. `340 / 1250`) |
 | **Einstellungen** | Tempo, Schriftgröße, Schriftart, Farbschema (dunkel/hell/sepia), Pivot-Farbe, Chunk-Größe 1–3, adaptive Pausen an/aus — persistiert über `storage.sync` |
 | **Leseposition** | Wird pro URL gemerkt; beim erneuten Öffnen wird das Fortsetzen angeboten |
+| **Vollbild** | Das Overlay geht automatisch in den Vollbildmodus (abschaltbar), jederzeit mit `F` umschaltbar |
 | **Isolation** | Das Overlay lebt in einem Shadow DOM, Seiten-CSS kann nicht hineinwirken |
 
 Berechtigungen: ausschließlich `activeTab`, `contextMenus`, `storage`, `scripting`.
@@ -103,8 +104,21 @@ umgehen — dort ist Signierung Pflicht.
 | `Leertaste` | Pause / Weiter |
 | `←` `→` | 10 Wörter zurück / vor |
 | `↑` `↓` | Tempo ±25 wpm |
-| `Esc` | Overlay schließen |
+| `F` | Vollbild ein/aus |
+| `Esc` | Overlay schließen (beendet auch das Vollbild) |
 | Klick auf die Bühne | Pause / Weiter |
+
+### Zum Vollbild
+
+Das Overlay fordert den Vollbildmodus direkt beim Öffnen an. Browser verlangen
+dafür allerdings eine **Nutzeraktivierung in der Seite** — ein Klick auf das
+Toolbar-Icon oder `Alt`+`R` passiert in der Browser-Oberfläche und zählt dafür
+nicht. Wird die Anforderung deshalb abgelehnt, merkt FlashRead sich den Wunsch
+und löst ihn bei der ersten Interaktion im Overlay ein, also beim ersten
+Tastendruck oder Klick — in der Praxis sofort, weil man ohnehin `Leertaste`
+drückt.
+
+Abschaltbar in den Einstellungen unter *Automatisch in den Vollbildmodus*.
 
 Einstellungen: Zahnrad-Symbol oben rechts im Overlay, oder Rechtsklick auf das
 Toolbar-Icon → *Optionen* / *Einstellungen*.
@@ -258,6 +272,7 @@ Häufige Wünsche und die Stelle dafür:
 | Länge und Stärke des sanften Starts | `reader.js` → `durationFor()` → `2.2 - i * 0.3` |
 | Sprungweite der Pfeiltasten (10 Wörter) | `reader.js` → `_onKeyDown()` → `this.seek(±10)` |
 | Anzahl Wörter im Wiedereinstieg (5) | `reader.js` → `showContext()` → `end - 5` |
+| Vollbild-Verhalten | `reader.js` → `enterFullscreen()` / `_consumePendingFullscreen()` |
 | Overlay-Aussehen, Farbschemata | `reader.css` (Variablen ganz oben) |
 | Tastenkürzel `Alt`+`R` | `manifest.json` → `commands.flashread-start.suggested_key` |
 | Wie viele Lesepositionen gespeichert werden (60) | `lib/settings.js` → `MAX_POSITIONS` |
@@ -355,6 +370,11 @@ Dann konnte `reader.css` nicht geladen werden. Prüfen, dass
 `web_accessible_resources` in `manifest.json` `reader.css` enthält und die
 Erweiterung nach der Änderung neu geladen wurde. Der Reader fällt in diesem
 Fall auf ein Minimal-Stylesheet zurück, bleibt also benutzbar.
+
+**Vollbild springt nicht sofort an**
+Erwartetes Verhalten — siehe [Zum Vollbild](#zum-vollbild). Drück einmal
+`Leertaste` oder klick ins Overlay, dann schaltet es um. Wer es gar nicht will,
+schaltet es in den Einstellungen ab.
 
 **Einstellungen werden nicht übernommen**
 `storage.sync` ist in Firefox nur mit angemeldetem Konto aktiv. `lib/settings.js`
