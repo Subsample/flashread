@@ -1,0 +1,292 @@
+/*
+ * FlashRead - options.css
+ * Styles der Einstellungsseite (normale Extension-Seite, kein Shadow DOM).
+ */
+
+:root {
+  --bg: #0f1115;
+  --panel: #171a20;
+  --fg: #eceff3;
+  --muted: #8b93a1;
+  --line: #2a2f38;
+  --accent: #ff4b4b;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --fg: #14171c;
+    --muted: #5d6675;
+    --line: #dfe3e9;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding-bottom: 60px;
+}
+
+/* --- Kopf ---------------------------------------------------------------- */
+
+.head {
+  padding: 26px 24px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 22px 24px; }
+
+/* --- Karten -------------------------------------------------------------- */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+
+.card h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: 14px;
+  font-weight: 700;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+
+.row:first-of-type { border-top: none; }
+.row[hidden] { display: none; }
+
+.label { flex: 1 1 auto; font-size: 14px; }
+.label em { display: block; font-style: normal; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+.control {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 230px;
+  justify-content: flex-end;
+}
+
+.row.check { align-items: flex-start; }
+.row.check input { margin-top: 3px; }
+
+.out {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 13px;
+  min-width: 68px;
+  text-align: right;
+}
+
+.out.mono { font-family: ui-monospace, Consolas, monospace; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 150px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--fg);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 15px; height: 15px;
+  border: none;
+  border-radius: 50%;
+  background: var(--fg);
+  cursor: pointer;
+}
+
+select,
+input[type="text"] {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  min-width: 210px;
+}
+
+input[type="color"] {
+  width: 42px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+
+/* --- Vorschau ------------------------------------------------------------ */
+
+.preview-card { padding: 0; overflow: hidden; }
+
+.preview {
+  padding: 34px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0f1115;
+  color: #eceff3;
+  --pv-line: #2a2f38;
+}
+
+.preview[data-theme="light"] { background: #f7f8fa; color: #14171c; --pv-line: #d3d8e0; }
+.preview[data-theme="sepia"] { background: #f3e9d8; color: #3b3125; --pv-line: #d9c9ad; }
+
+.pv-guide {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  height: 1px;
+  background: var(--pv-line);
+}
+
+.pv-tick {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 2px;
+  height: 13px;
+  transform: translateX(-50%);
+  background: var(--accent);
+}
+
+/* `minmax(0, 1fr)` wie in reader.css: sonst blaeht ein langer Wortanfang die
+   Aussenspalte auf und schiebt den Pivot aus der Mitte. */
+.pv-word {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  width: 100%;
+  max-width: 520px;
+  padding: 16px 0;
+  font-weight: 600;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.pv-before { text-align: right; }
+.pv-after { text-align: left; }
+.pv-pivot { color: var(--accent); }
+
+.preview-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+/* --- Sonstiges ----------------------------------------------------------- */
+
+.note { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.note code {
+  font-family: ui-monospace, Consolas, monospace;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 12px;
+}
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+.btn {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.btn:hover { border-color: var(--muted); }
+.btn-danger { color: var(--accent); border-color: var(--accent); }
+
+.keys { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.keys td { padding: 7px 0; border-top: 1px solid var(--line); }
+.keys tr:first-child td { border-top: none; }
+.keys td:first-child { width: 190px; }
+
+kbd {
+  display: inline-block;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.saved {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translate(-50%, 12px);
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.saved.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 560px) {
+  .row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .control { justify-content: flex-start; min-width: 0; }
+}

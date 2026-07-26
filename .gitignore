@@ -1,0 +1,19 @@
+# Betriebssystem
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editoren
+.vscode/
+.idea/
+*.swp
+
+# Build-/Signier-Artefakte
+*.zip
+*.xpi
+*.crx
+*.pem
+web-ext-artifacts/
+
+# Node (falls du spaeter web-ext o. ae. nutzt)
+node_modules/

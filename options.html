@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlashRead - Einstellungen</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+
+<header class="head">
+  <div class="brand"><span class="dot"></span> FlashRead</div>
+  <div class="sub">Einstellungen &middot; werden automatisch gespeichert</div>
+</header>
+
+<main class="wrap">
+
+  <!-- Live-Vorschau ------------------------------------------------------- -->
+  <section class="card preview-card">
+    <div id="preview" class="preview" data-theme="dark">
+      <div class="pv-guide"><i class="pv-tick"></i></div>
+      <div class="pv-word">
+        <span class="pv-before"></span><span class="pv-pivot"></span><span class="pv-after"></span>
+      </div>
+      <div class="pv-guide"><i class="pv-tick"></i></div>
+    </div>
+    <p class="preview-hint">Vorschau &ndash; der rote Buchstabe liegt immer exakt auf der Mittelachse.</p>
+  </section>
+
+  <!-- Lesen --------------------------------------------------------------- -->
+  <section class="card">
+    <h2>Lesen</h2>
+
+    <label class="row">
+      <span class="label">Standardtempo</span>
+      <span class="control">
+        <input type="range" id="wpm" min="100" max="1000" step="25">
+        <output id="wpmOut" class="out"></output>
+      </span>
+    </label>
+
+    <label class="row">
+      <span class="label">Woerter gleichzeitig
+        <em>Chunk-Groesse. 1 ist am schnellsten zu erfassen.</em>
+      </span>
+      <span class="control">
+        <input type="range" id="chunkSize" min="1" max="3" step="1">
+        <output id="chunkOut" class="out"></output>
+      </span>
+    </label>
+
+    <label class="row check">
+      <input type="checkbox" id="smartPauses">
+      <span class="label">Intelligente Pausen
+        <em>Laengere Woerter und Satzzeichen bekommen mehr Zeit
+            (Komma 1,3x &middot; Punkt 2x &middot; Absatz 1,6x).</em>
+      </span>
+    </label>
+
+    <label class="row check">
+      <input type="checkbox" id="warmup">
+      <span class="label">Sanfter Start
+        <em>Die ersten fuenf Einheiten laufen langsamer an.</em>
+      </span>
+    </label>
+
+    <label class="row check">
+      <input type="checkbox" id="rememberPosition">
+      <span class="label">Leseposition merken
+        <em>Beim erneuten Oeffnen einer Seite wird das Fortsetzen angeboten.</em>
+      </span>
+    </label>
+
+  </section>
+
+  <!-- Darstellung ---------------------------------------------------------- -->
+  <section class="card">
+    <h2>Darstellung</h2>
+
+    <label class="row">
+      <span class="label">Farbschema</span>
+      <span class="control">
+        <select id="theme">
+          <option value="dark">Dunkel</option>
+          <option value="light">Hell</option>
+          <option value="sepia">Sepia</option>
+        </select>
+      </span>
+    </label>
+
+    <label class="row">
+      <span class="label">Schriftgroesse</span>
+      <span class="control">
+        <input type="range" id="fontSize" min="24" max="160" step="2">
+        <output id="fontSizeOut" class="out"></output>
+      </span>
+    </label>
+
+    <label class="row">
+      <span class="label">Schriftart</span>
+      <span class="control">
+        <select id="fontFamily">
+          <option value='system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'>System (serifenlos)</option>
+          <option value='"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'>Segoe UI</option>
+          <option value='Helvetica, Arial, sans-serif'>Helvetica / Arial</option>
+          <option value='Verdana, Geneva, sans-serif'>Verdana</option>
+          <option value='"Trebuchet MS", sans-serif'>Trebuchet MS</option>
+          <option value='Tahoma, sans-serif'>Tahoma</option>
+          <option value='Georgia, "Times New Roman", serif'>Georgia (Serif)</option>
+          <option value='"Courier New", monospace'>Courier New (Mono)</option>
+          <option value="__custom__">Eigene Angabe &hellip;</option>
+        </select>
+      </span>
+    </label>
+
+    <label class="row" id="customFontRow" hidden>
+      <span class="label">Eigene CSS-Schriftfamilie</span>
+      <span class="control">
+        <input type="text" id="fontFamilyCustom" placeholder='z. B. "Inter", sans-serif'>
+      </span>
+    </label>
+
+    <label class="row">
+      <span class="label">Pivot-Farbe
+        <em>Der hervorgehobene Buchstabe (Optimal Recognition Point).</em>
+      </span>
+      <span class="control">
+        <input type="color" id="pivotColor">
+        <output id="pivotOut" class="out mono"></output>
+      </span>
+    </label>
+  </section>
+
+  <!-- Daten ---------------------------------------------------------------- -->
+  <section class="card">
+    <h2>Daten</h2>
+    <p class="note">
+      FlashRead sendet nichts ins Netz. Einstellungen liegen in
+      <code>storage.sync</code>, gespeicherte Lesepositionen in
+      <code>storage.local</code>.
+    </p>
+    <p class="note" id="posCount">&nbsp;</p>
+    <div class="actions">
+      <button type="button" id="clearPositions" class="btn">Gespeicherte Lesepositionen loeschen</button>
+      <button type="button" id="reset" class="btn btn-danger">Alles zuruecksetzen</button>
+    </div>
+  </section>
+
+  <!-- Bedienung ------------------------------------------------------------ -->
+  <section class="card">
+    <h2>Bedienung</h2>
+    <table class="keys">
+      <tr><td><kbd>Alt</kbd> + <kbd>R</kbd></td><td>Reader starten (Tastenkuerzel)</td></tr>
+      <tr><td><kbd>Leertaste</kbd></td><td>Pause / Weiter</td></tr>
+      <tr><td><kbd>&larr;</kbd> <kbd>&rarr;</kbd></td><td>10 Woerter zurueck / vor</td></tr>
+      <tr><td><kbd>&uarr;</kbd> <kbd>&darr;</kbd></td><td>Tempo um 25 wpm aendern</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Overlay schliessen</td></tr>
+    </table>
+  </section>
+
+  <p class="saved" id="saved">Gespeichert</p>
+</main>
+
+<script src="lib/browser-polyfill.js"></script>
+<script src="lib/settings.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Zeilenenden im Repository immer als LF speichern, im Arbeitsverzeichnis
+# darf Windows CRLF verwenden. Verhindert die "LF will be replaced by CRLF"-
+# Warnungen und sorgt fuer saubere Diffs ueber Betriebssysteme hinweg.
+* text=auto eol=lf
+
+# Binaerdateien nie anfassen
+*.png binary
+*.zip binary
+*.xpi binary

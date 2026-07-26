@@ -1,0 +1,63 @@
+{
+  "manifest_version": 3,
+  "name": "FlashRead",
+  "version": "1.0.0",
+  "description": "RSVP-Schnellleser: zeigt den Haupttext jeder Seite Wort fuer Wort an einer festen Blickachse an.",
+
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "scripting"
+  ],
+
+  "action": {
+    "default_title": "Mit FlashRead lesen (Alt+R)",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+
+  "commands": {
+    "flashread-start": {
+      "suggested_key": {
+        "default": "Alt+R"
+      },
+      "description": "FlashRead auf der aktuellen Seite starten"
+    }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["reader.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "flashread@localhost",
+      "strict_min_version": "109.0"
+    }
+  }
+}

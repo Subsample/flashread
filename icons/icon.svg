@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="FlashRead">
+  <title>FlashRead</title>
+
+  <!-- Hintergrund -->
+  <rect x="0" y="0" width="128" height="128" rx="26" ry="26" fill="#14171c"/>
+
+  <!-- Fuehrungslinien ober- und unterhalb des Wortes -->
+  <rect x="18" y="34" width="92" height="2" rx="1" fill="#3a414d"/>
+  <rect x="18" y="92" width="92" height="2" rx="1" fill="#3a414d"/>
+
+  <!-- Markierungen auf der Pivot-Achse (exakt Mitte) -->
+  <rect x="62" y="28" width="4" height="14" rx="2" fill="#ff4b4b"/>
+  <rect x="62" y="86" width="4" height="14" rx="2" fill="#ff4b4b"/>
+
+  <!-- Das "Wort": weisses Band, in der Mitte der rote Pivot-Buchstabe -->
+  <rect x="18" y="54" width="40" height="20" rx="6" fill="#eceff3"/>
+  <rect x="60" y="52" width="8"  height="24" rx="3" fill="#ff4b4b"/>
+  <rect x="70" y="54" width="40" height="20" rx="6" fill="#eceff3"/>
+</svg>

@@ -1,0 +1,410 @@
+/*
+ * FlashRead - reader.css
+ * ---------------------------------------------------------------------------
+ * Wird von reader.js geladen und in den Shadow Root des Overlays gehaengt.
+ * Dadurch ist es vom Seiten-CSS vollstaendig isoliert.
+ *
+ * Die entscheidende Stelle fuer den ORP: `.fr-word` ist ein Grid mit
+ * `1fr auto 1fr`. Die mittlere Spalte enthaelt genau den Pivot-Buchstaben und
+ * liegt dadurch immer exakt auf der halben Breite - unabhaengig davon, wie
+ * lang das Wort links oder rechts davon ist. Die Fuehrungslinien setzen ihre
+ * Markierung auf dieselbe 50-%-Achse.
+ * ---------------------------------------------------------------------------
+ */
+
+/* --- Farbschemata --------------------------------------------------------- */
+
+.fr-root {
+  --fr-bg: #0f1115;
+  --fr-fg: #eceff3;
+  --fr-muted: #8b93a1;
+  --fr-line: #2a2f38;
+  --fr-panel: #171a20;
+  --fr-accent: #5b9dff;
+
+  --fr-font-size: 64px;
+  --fr-font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fr-pivot-color: #ff4b4b;
+}
+
+.fr-root[data-theme="light"] {
+  --fr-bg: #f7f8fa;
+  --fr-fg: #14171c;
+  --fr-muted: #616b7a;
+  --fr-line: #d3d8e0;
+  --fr-panel: #ffffff;
+  --fr-accent: #2f6fd0;
+}
+
+.fr-root[data-theme="sepia"] {
+  --fr-bg: #f3e9d8;
+  --fr-fg: #3b3125;
+  --fr-muted: #8a7a63;
+  --fr-line: #d9c9ad;
+  --fr-panel: #fbf4e7;
+  --fr-accent: #a2681f;
+}
+
+/* --- Grundgeruest --------------------------------------------------------- */
+
+.fr-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--fr-bg);
+  color: var(--fr-fg);
+  font-family: var(--fr-font-family);
+  font-size: 15px;
+  line-height: 1.4;
+  outline: none;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.fr-root *,
+.fr-root *::before,
+.fr-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Kopfzeile ------------------------------------------------------------ */
+
+.fr-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--fr-line);
+  flex: 0 0 auto;
+}
+
+.fr-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.fr-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--fr-pivot-color);
+  display: inline-block;
+}
+
+.fr-title {
+  flex: 1 1 auto;
+  color: var(--fr-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fr-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.fr-source {
+  font-size: 11px;
+  color: var(--fr-muted);
+  border: 1px solid var(--fr-line);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.fr-icon-btn {
+  background: transparent;
+  border: 1px solid var(--fr-line);
+  color: var(--fr-fg);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fr-icon-btn:hover { background: var(--fr-panel); }
+
+/* --- Buehne mit dem Wort -------------------------------------------------- */
+
+.fr-stage {
+  flex: 1 1 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* Fuehrungslinien ober- und unterhalb des Wortes */
+.fr-guide {
+  position: relative;
+  width: min(90vw, 1100px);
+  height: 1px;
+  background: var(--fr-line);
+  flex: 0 0 auto;
+}
+
+.fr-guide-top { margin-bottom: calc(var(--fr-font-size) * 0.45); }
+.fr-guide-bottom { margin-top: calc(var(--fr-font-size) * 0.45); }
+
+/* Markierung auf der Pivot-Achse (exakt 50 % der Buehnenbreite) */
+.fr-tick {
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  height: 12px;
+  background: var(--fr-pivot-color);
+  transform: translateX(-50%);
+  opacity: .85;
+}
+
+.fr-guide-top .fr-tick { top: 0; }
+.fr-guide-bottom .fr-tick { bottom: 0; }
+
+/*
+ * Das Wort: drei Spalten, die mittlere haelt den Pivot-Buchstaben.
+ *
+ * WICHTIG: `minmax(0, 1fr)` statt `1fr`. Ein blosses `1fr` hat als Minimum
+ * die Inhaltsbreite - ein sehr langer Wortanfang wuerde die Spalte aufblaehen
+ * und den Pivot aus der Mitte druecken. Mit `minmax(0, 1fr)` duerfen die
+ * Aussenspalten beliebig schrumpfen und der Text laeuft nach aussen ueber,
+ * waehrend die Auto-Spalte exakt auf 50 % bleibt.
+ */
+.fr-word {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  width: min(90vw, 1100px);
+  overflow: visible;
+  font-size: calc(var(--fr-font-size) * var(--fr-word-scale, 1));
+  font-weight: 600;
+  letter-spacing: -.01em;
+  white-space: pre;
+  line-height: 1.15;
+  flex: 0 0 auto;
+}
+
+.fr-before { text-align: right; }
+.fr-after  { text-align: left; }
+.fr-pivot  { color: var(--fr-pivot-color); }
+
+/* Wiedereinstiegshilfe bei Pause */
+.fr-context {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 12%;
+  max-width: min(80vw, 800px);
+  text-align: center;
+  font-size: 17px;
+  color: var(--fr-muted);
+  opacity: 0;
+  transition: opacity .18s ease;
+  pointer-events: none;
+}
+
+.fr-root.is-paused .fr-context { opacity: 1; }
+
+/* Kurzes Aufblitzen beim Absatzwechsel */
+.fr-para {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 26px;
+  color: var(--fr-accent);
+  opacity: 0;
+}
+
+.fr-para.is-on { animation: fr-para-flash .45s ease-out; }
+
+@keyframes fr-para-flash {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  25%  { opacity: .85; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; }
+}
+
+/* --- Fusszeile ------------------------------------------------------------ */
+
+.fr-foot {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--fr-line);
+  background: var(--fr-panel);
+}
+
+.fr-bar {
+  height: 4px;
+  background: var(--fr-line);
+  overflow: hidden;
+}
+
+.fr-bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--fr-pivot-color);
+  transition: width .12s linear;
+}
+
+.fr-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px 6px;
+  flex-wrap: wrap;
+}
+
+.fr-meta-left,
+.fr-meta-center,
+.fr-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fr-meta-center { flex: 1 1 260px; justify-content: center; }
+.fr-meta-right  { margin-left: auto; color: var(--fr-muted); font-variant-numeric: tabular-nums; }
+
+.fr-btn {
+  background: transparent;
+  border: 1px solid var(--fr-line);
+  color: var(--fr-fg);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fr-btn:hover { background: var(--fr-bg); }
+
+.fr-btn-primary {
+  background: var(--fr-pivot-color);
+  border-color: var(--fr-pivot-color);
+  color: #fff;
+  font-weight: 600;
+}
+
+.fr-wpm {
+  font-variant-numeric: tabular-nums;
+  min-width: 82px;
+  font-size: 13px;
+  color: var(--fr-muted);
+}
+
+.fr-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 340px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fr-line);
+  outline: none;
+  cursor: pointer;
+}
+
+.fr-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--fr-fg);
+  border: none;
+  cursor: pointer;
+}
+
+.fr-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--fr-fg);
+  border: none;
+  cursor: pointer;
+}
+
+.fr-sep { opacity: .5; }
+
+.fr-hint {
+  padding: 0 20px 12px;
+  font-size: 11.5px;
+  color: var(--fr-muted);
+  text-align: center;
+}
+
+.fr-hint b { color: var(--fr-fg); font-weight: 600; }
+
+/* --- Fortsetzen-Dialog ---------------------------------------------------- */
+
+.fr-resume {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Fallback zuerst: aeltere Engines ohne color-mix (< Chrome 111 /
+     < Firefox 113) ignorieren die zweite Zeile und behalten diese hier. */
+  background: rgba(15, 17, 21, .88);
+  background: color-mix(in srgb, var(--fr-bg) 88%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.fr-resume[hidden] { display: none; }
+
+.fr-resume-box {
+  background: var(--fr-panel);
+  border: 1px solid var(--fr-line);
+  border-radius: 14px;
+  padding: 26px 28px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+
+.fr-resume-box h2 {
+  font-size: 19px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.fr-resume-text {
+  color: var(--fr-muted);
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.fr-resume-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* --- Kleine Bildschirme --------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .fr-root { font-size: 14px; }
+  .fr-word { font-size: calc(var(--fr-font-size) * .62); }
+  .fr-meta { gap: 10px; }
+  .fr-meta-right { width: 100%; margin-left: 0; justify-content: center; }
+  .fr-title { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fr-bar-fill { transition: none; }
+  .fr-para.is-on { animation-duration: .01s; }
+}
