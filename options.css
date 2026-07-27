@@ -166,7 +166,33 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--accent);
 
 /* --- Vorschau ------------------------------------------------------------ */
 
-.preview-card { padding: 0; overflow: hidden; }
+/*
+ * Die Vorschau bleibt beim Scrollen oben stehen, damit man die Wirkung von
+ * Schriftgroesse, Farbschema und Pivot-Farbe sieht, waehrend man die Regler
+ * weiter unten bedient.
+ *
+ * Voraussetzung: kein Vorfahre mit `overflow` ausser `visible`. `.wrap` und
+ * `body` setzen keins - das eigene `overflow: hidden` der Karte stoert nicht,
+ * nur das von Vorfahren wuerde `sticky` aushebeln.
+ */
+.preview-card {
+  padding: 0;
+  overflow: hidden;
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+}
+
+/*
+ * Erst auf wirklich flachen Fenstern loesen. Die Vorschau ist rund 230 px
+ * hoch; bei 720 px Fensterhoehe bleiben damit noch 464 px fuer die Regler,
+ * das ist bequem nutzbar. Unter 520 px waeren es keine 270 px mehr - dann
+ * ist eine mitscrollende Vorschau sinnvoller als eine angeheftete.
+ */
+@media (max-height: 520px) {
+  .preview-card { position: static; box-shadow: none; }
+}
 
 .preview {
   padding: 34px 20px;

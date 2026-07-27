@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an FlashRead.
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.4] – 2026-07-27
+
+### Einstellungen
+- **Die Vorschau bleibt beim Scrollen oben stehen.** So sieht man die Wirkung
+  von Schriftgröße, Farbschema und Pivot-Farbe, während man die Regler weiter
+  unten bedient. Auf Fenstern unter 520 px Höhe scrollt sie normal mit, sonst
+  bliebe zu wenig Platz für die Einstellungen selbst.
+
 ## [1.1.3] – 2026-07-27
 
 Robustheit gegenüber echten Webseiten, dazu Aufräumen. Keine neuen Funktionen,
@@ -126,6 +134,8 @@ Erste Fassung.
 - Ein Paket für Chrome und Firefox (Manifest V3), keine Build-Tools,
   keine externen Requests, keine Telemetrie.
 
+[1.1.4]: https://github.com/Subsample/flashread/releases/tag/v1.1.4
+[1.1.3]: https://github.com/Subsample/flashread/releases/tag/v1.1.3
 [1.1.1]: https://github.com/Subsample/flashread/releases/tag/v1.1.1
 [1.1.0]: https://github.com/Subsample/flashread/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Subsample/flashread/releases/tag/v1.0.0
