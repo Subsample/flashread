@@ -128,7 +128,9 @@ async function ensureInjected(tabId) {
   try {
     const res = await api.scripting.executeScript({
       target: { tabId },
-      func: () => !!window.__FLASHREAD_READY__
+      // globalThis, damit die Probe denselben Global sieht wie content.js
+      // (in Firefox ist `window` im Content-Script ein anderes Objekt).
+      func: () => !!globalThis.__FLASHREAD_READY__
     });
     already = !!(res && res[0] && res[0].result);
   } catch (err) {

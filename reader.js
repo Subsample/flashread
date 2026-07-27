@@ -236,7 +236,8 @@
       this._prevOverflow = document.documentElement.style.overflow;
       document.documentElement.style.overflow = 'hidden';
 
-      global.addEventListener('keydown', this._onKeyDown, true);
+      // Echter DOM-Zugriff -> `window`, nicht der Sandbox-Global.
+      window.addEventListener('keydown', this._onKeyDown, true);
 
       // Verlaesst der Nutzer das Vollbild ueber F11 oder Esc des Browsers,
       // soll der Knopf das widerspiegeln.
@@ -655,7 +656,7 @@
       this.playing = false;
       this._pendingFullscreen = false;
 
-      global.removeEventListener('keydown', this._onKeyDown, true);
+      window.removeEventListener('keydown', this._onKeyDown, true);
       if (this._onFsChange) document.removeEventListener('fullscreenchange', this._onFsChange);
       if (this._onFsError) document.removeEventListener('fullscreenerror', this._onFsError);
 
@@ -718,4 +719,7 @@
   };
 
   global.FlashReadReader = FlashReadReader;
-})(typeof window !== 'undefined' ? window : globalThis);
+
+// `globalThis` statt `window` - siehe Hinweis in lib/settings.js (Firefox-Xray).
+// DOM-Zugriffe im Code oben benutzen weiterhin bewusst `window` und `document`.
+})(globalThis);

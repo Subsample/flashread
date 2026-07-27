@@ -4,6 +4,33 @@ Alle nennenswerten Änderungen an FlashRead.
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.1] – 2026-07-27
+
+### Behoben
+- **Firefox startete den Reader nicht.** Chrome und Firefox behandeln den
+  globalen Namensraum in Content-Scripts unterschiedlich: in Chrome ist
+  `window` dasselbe Objekt wie `globalThis`, in Firefox ist `window` eine
+  Xray-gekapselte Sicht auf das *Seiten*fenster und damit ein anderes Objekt
+  als der Sandbox-Global der Erweiterung.
+
+  `lib/browser-polyfill.js` legte die API auf `globalThis` ab, `content.js`
+  las sie aus `window` — in Firefox also `undefined`. Dadurch warf
+  `api.runtime.onMessage.addListener()`, der Listener wurde nie registriert
+  und `tabs.sendMessage` scheiterte mit *"Could not establish connection.
+  Receiving end does not exist."*
+
+  Alle injizierten Dateien benutzen jetzt konsistent `globalThis`. Echte
+  DOM-Zugriffe (`window.addEventListener`, `window.getSelection`, `document`)
+  bleiben bewusst auf `window`.
+
+### Geändert
+- `content.js` prüft beim Start, ob alle Abhängigkeiten im gemeinsamen Global
+  liegen, und meldet das Fehlende im Klartext statt mit einem TypeError. Das
+  `__FLASHREAD_READY__`-Flag wird erst *nach* dieser Prüfung gesetzt, damit ein
+  fehlgeschlagener Versuch nicht als "fertig injiziert" gilt.
+- README von 17,4 KB auf 6,7 KB gekürzt, Abschnitt zum Signieren und zur
+  AMO-Einreichung ergänzt.
+
 ## [1.1.0] – 2026-07-26
 
 ### Neu
@@ -41,5 +68,6 @@ Erste Fassung.
 - Ein Paket für Chrome und Firefox (Manifest V3), keine Build-Tools,
   keine externen Requests, keine Telemetrie.
 
-[1.1.0]: https://github.com/DEIN-BENUTZERNAME/flashread/releases/tag/v1.1.0
-[1.0.0]: https://github.com/DEIN-BENUTZERNAME/flashread/releases/tag/v1.0.0
+[1.1.1]: https://github.com/Subsample/flashread/releases/tag/v1.1.1
+[1.1.0]: https://github.com/Subsample/flashread/releases/tag/v1.1.0
+[1.0.0]: https://github.com/Subsample/flashread/releases/tag/v1.0.0

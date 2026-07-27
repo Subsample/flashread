@@ -14,10 +14,29 @@
   'use strict';
 
   // Doppelte Injektion verhindern (background.js prueft dieses Flag).
-  if (window.__FLASHREAD_READY__) return;
-  window.__FLASHREAD_READY__ = true;
+  if (globalThis.__FLASHREAD_READY__) return;
 
-  const api = window.FRAPI || window.browser || window.chrome;
+  // `globalThis`, nicht `window`: in Firefox-Content-Scripts sind das zwei
+  // verschiedene Objekte (Xray). Auf `window` liegt hier weder `FRAPI` noch
+  // `browser` - der Zugriff darauf lieferte undefined und liess den Listener
+  // nie registrieren ("Receiving end does not exist").
+  const api = globalThis.FRAPI || globalThis.browser || globalThis.chrome;
+
+  // Alle injizierten Dateien muessen sich im selben Global wiederfinden.
+  // Schlaegt das fehl, wuerde weiter unten ein nichtssagender TypeError
+  // fliegen - deshalb hier eine klare Meldung.
+  const fehlt = ['FRAPI', 'FRSettings', 'Readability', 'FlashReadReader']
+    .filter((name) => !globalThis[name]);
+  if (!api || fehlt.length) {
+    console.error('[FlashRead] Abhaengigkeiten nicht gefunden:', fehlt.join(', ') || '(keine API)',
+      '- Injektionsreihenfolge in background.js pruefen.');
+    // Flag NICHT setzen: sonst haelt background.js den Tab fuer fertig
+    // injiziert und ein zweiter Versuch wuerde uebersprungen.
+    return;
+  }
+
+  // Ab hier ist alles da - erst jetzt als bereit markieren.
+  globalThis.__FLASHREAD_READY__ = true;
 
   // --- 1. Textquelle -------------------------------------------------------
 
@@ -55,7 +74,7 @@
     let bestValue = 0;
     for (const [node, value] of score) {
       // Linklastige Container (Navigation, Teaser-Listen) abwerten
-      const density = window.Readability ? window.Readability.linkDensity(node) : 0;
+      const density = globalThis.Readability ? globalThis.Readability.linkDensity(node) : 0;
       const adjusted = value * (1 - Math.min(density, 0.9));
       // Bei Gleichstand den *spezifischeren* (tieferen) Knoten bevorzugen
       if (adjusted > bestValue * 1.02) { bestValue = adjusted; best = node; }
@@ -64,8 +83,8 @@
     if (!best) return '';
     // cleanTextFrom raeumt auf einer Kopie auf (Werbung, Kommentare, ...) -
     // im lebenden DOM duerfen wir nichts entfernen.
-    if (window.Readability && window.Readability.cleanTextFrom) {
-      return window.Readability.cleanTextFrom(best);
+    if (globalThis.Readability && globalThis.Readability.cleanTextFrom) {
+      return globalThis.Readability.cleanTextFrom(best);
     }
     return (best.innerText || best.textContent || '').trim();
   }
@@ -77,9 +96,9 @@
       return { text: selection, title: document.title, source: 'Auswahl' };
     }
 
-    if (window.Readability) {
+    if (globalThis.Readability) {
       try {
-        const article = new window.Readability(document.cloneNode(true)).parse();
+        const article = new globalThis.Readability(document.cloneNode(true)).parse();
         if (article && article.textContent && article.textContent.length > 250) {
           return { text: article.textContent, title: article.title || document.title, source: 'Readability' };
         }
@@ -128,33 +147,33 @@
 
   async function start() {
     if (busy) return;
-    if (window.FlashReadReader && window.FlashReadReader.isOpen()) {
-      window.FlashReadReader.close();
+    if (globalThis.FlashReadReader && globalThis.FlashReadReader.isOpen()) {
+      globalThis.FlashReadReader.close();
       return;
     }
     busy = true;
 
     try {
-      const settings = await window.FRSettings.load();
+      const settings = await globalThis.FRSettings.load();
       const { text, title, source } = extract();
       const words = tokenize(text);
 
       if (words.length < 5) {
-        window.FlashReadReader.toast('FlashRead: Auf dieser Seite wurde kein lesbarer Text gefunden.');
+        globalThis.FlashReadReader.toast('FlashRead: Auf dieser Seite wurde kein lesbarer Text gefunden.');
         return;
       }
 
       const isSelection = source === 'Auswahl';
       let resume = null;
       if (settings.rememberPosition && !isSelection) {
-        const saved = await window.FRSettings.getPosition(location.href);
+        const saved = await globalThis.FRSettings.getPosition(location.href);
         // Nur anbieten, wenn der Text noch ungefaehr derselbe ist.
         if (saved && saved.index > 5 && Math.abs(saved.total - words.length) <= words.length * 0.1) {
           resume = saved;
         }
       }
 
-      window.FlashReadReader.open({
+      globalThis.FlashReadReader.open({
         words,
         settings,
         title: title || document.location.hostname,
@@ -163,16 +182,16 @@
         // Fortschritt regelmaessig sichern
         onProgress: (index) => {
           if (!settings.rememberPosition || isSelection) return;
-          window.FRSettings.setPosition(location.href, index, words.length, title);
+          globalThis.FRSettings.setPosition(location.href, index, words.length, title);
         },
         // Am Ende die Position loeschen, damit nicht "fortsetzen" angeboten wird
         onFinished: () => {
-          if (!isSelection) window.FRSettings.clearPosition(location.href);
+          if (!isSelection) globalThis.FRSettings.clearPosition(location.href);
         },
         onOpenOptions: () => {
           api.runtime.sendMessage({ type: 'FLASHREAD_OPEN_OPTIONS' });
         },
-        onSaveSettings: (patch) => window.FRSettings.save(patch)
+        onSaveSettings: (patch) => globalThis.FRSettings.save(patch)
       });
     } catch (err) {
       console.error('[FlashRead] Fehler beim Start:', err);

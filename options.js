@@ -105,7 +105,7 @@
 
   function readForm() {
     const fontFamily = FIELDS.fontFamily.value === '__custom__'
-      ? (customFontInput.value.trim() || window.FR_DEFAULTS.fontFamily)
+      ? (customFontInput.value.trim() || globalThis.FR_DEFAULTS.fontFamily)
       : FIELDS.fontFamily.value;
 
     return {
@@ -129,14 +129,14 @@
   }
 
   function onChange() {
-    const draft = window.FRSettings.sanitize(readForm());
+    const draft = globalThis.FRSettings.sanitize(readForm());
     current = draft;
     renderOutputs(draft);
     renderPreview(draft);
 
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
-      current = await window.FRSettings.save(draft);
+      current = await globalThis.FRSettings.save(draft);
       showSaved();
     }, 250);
   }
@@ -151,28 +151,28 @@
   FIELDS.fontFamily.addEventListener('change', () => {
     customFontRow.hidden = FIELDS.fontFamily.value !== '__custom__';
     if (!customFontRow.hidden && !customFontInput.value) {
-      customFontInput.value = window.FR_DEFAULTS.fontFamily;
+      customFontInput.value = globalThis.FR_DEFAULTS.fontFamily;
     }
   });
   customFontInput.addEventListener('input', onChange);
 
   $('clearPositions').addEventListener('click', async () => {
-    await window.FRSettings.clearPositions();
+    await globalThis.FRSettings.clearPositions();
     await updatePositionCount();
     showSaved();
   });
 
   $('reset').addEventListener('click', async () => {
     if (!confirm('Alle Einstellungen und gespeicherten Lesepositionen zuruecksetzen?')) return;
-    await window.FRSettings.clearPositions();
-    const fresh = await window.FRSettings.reset();
+    await globalThis.FRSettings.clearPositions();
+    const fresh = await globalThis.FRSettings.reset();
     fillForm(fresh);
     await updatePositionCount();
     showSaved();
   });
 
   async function updatePositionCount() {
-    const n = await window.FRSettings.countPositions();
+    const n = await globalThis.FRSettings.countPositions();
     $('posCount').textContent = n === 0
       ? 'Aktuell sind keine Lesepositionen gespeichert.'
       : `Aktuell gespeicherte Lesepositionen: ${n}`;
@@ -181,7 +181,7 @@
   // --- Start ----------------------------------------------------------------
 
   (async function init() {
-    current = await window.FRSettings.load();
+    current = await globalThis.FRSettings.load();
     fillForm(current);
     await updatePositionCount();
   })();
