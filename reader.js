@@ -41,6 +41,9 @@
     .fr-pivot{color:#ff4b4b}
   `;
 
+  /** reader.css wird einmal pro Seite geholt und hier behalten. */
+  let cssText = null;
+
   // --------------------------------------------------------------------------
   // Hilfsfunktionen
   // --------------------------------------------------------------------------
@@ -111,15 +114,12 @@
       this.playing = false;
       this.timer = null;
       this.finished = false;
-      this.startedAt = 0;
-
-      this._ownsFullscreen = false;    // haben WIR das Vollbild angefordert?
-      this._pendingFullscreen = false; // Wunsch offen, wartet auf Interaktion
+      this._nextAt = 0;                // Soll-Zeitpunkt des naechsten Wortes
+      this._pendingFullscreen = false; // Vollbild-Wunsch wartet auf Interaktion
 
       this.host = null;
       this.shadow = null;
       this.el = {};
-      this._ownsFullscreen = false;
       this._pendingFullscreen = false;
 
       this._onKeyDown = this._onKeyDown.bind(this);
@@ -284,19 +284,24 @@
       if (this.settings.fullscreen) await this.enterFullscreen();
     }
 
+    /** Laedt reader.css einmal pro Seite und merkt sich das Ergebnis. */
     static async loadCss() {
+      if (cssText !== null) return cssText;
+
       const url = api && api.runtime && api.runtime.getURL
         ? api.runtime.getURL('reader.css')
         : null;
-      if (!url) return CSS_FALLBACK;
+      if (!url) return (cssText = CSS_FALLBACK);
+
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.text();
+        cssText = await res.text();
       } catch (err) {
         console.warn('[FlashRead] reader.css konnte nicht geladen werden:', err);
-        return CSS_FALLBACK;
+        cssText = CSS_FALLBACK;
       }
+      return cssText;
     }
 
     /**
@@ -440,7 +445,7 @@
       this.el.state.textContent = 'Pause';
       this.el.root.classList.remove('is-paused');
       this.el.context.textContent = '';
-      this.startedAt = Date.now();
+      this._nextAt = 0;                 // Drift-Korrektur neu anfangen
       this._tick();
     }
 
@@ -464,6 +469,13 @@
       if (!this.playing) return;
       if (this.index >= this.chunks.length) return this.finish();
 
+      // Manche Seiten bauen ihr DOM waehrend des Lesens neu auf (SPA-Routing,
+      // Lazy-Loading) und raeumen unseren Host dabei mit weg. Dann einfach
+      // wieder einhaengen, statt unsichtbar weiterzulaufen.
+      if (this.host && !this.host.isConnected) {
+        (document.body || document.documentElement).appendChild(this.host);
+      }
+
       this.shown = this.index;
       this.renderChunk(this.index);
       const delay = this.durationFor(this.index);
@@ -473,7 +485,17 @@
       // alle ~40 Chunks die Position sichern
       if (this.index % 40 === 0) this.reportProgress();
 
-      this.timer = setTimeout(this._tick, delay);
+      /*
+       * Drift-Korrektur: setTimeout feuert nie exakt, und die Verspaetungen
+       * summieren sich ueber tausende Woerter zu einem spuerbar zu langsamen
+       * Tempo. Deshalb rechnen wir gegen einen Soll-Zeitpunkt statt gegen
+       * "jetzt". Nach einer groesseren Luecke (Tab im Hintergrund, Ruhezustand)
+       * wird der Soll-Zeitpunkt neu gesetzt, damit nicht aufgeholt wird.
+       */
+      const now = Date.now();
+      if (!this._nextAt || now - this._nextAt > 1000) this._nextAt = now;
+      this._nextAt += delay;
+      this.timer = setTimeout(this._tick, Math.max(0, this._nextAt - now));
     }
 
     finish() {
@@ -645,7 +667,6 @@
         // Promise - Fehler kommen dort nur als `fullscreenerror`-Event, das
         // in mount() mitgehoert wird.
         if (result && typeof result.then === 'function') await result;
-        this._ownsFullscreen = true;
         this._pendingFullscreen = false;
         return true;
       } catch (err) {
@@ -665,7 +686,6 @@
       } catch (err) {
         console.debug('[FlashRead] Vollbild konnte nicht beendet werden:', err);
       }
-      this._ownsFullscreen = false;
     }
 
     toggleFullscreen() {
@@ -692,12 +712,12 @@
       if (this._onFsChange) document.removeEventListener('fullscreenchange', this._onFsChange);
       if (this._onFsError) document.removeEventListener('fullscreenerror', this._onFsError);
 
-      // Vollbild nur beenden, wenn WIR es angefordert haben - war die Seite
-      // vorher schon im Vollbild (z. B. ein Video), bleibt sie es.
-      if (this.isFullscreen()) {
-        document.exitFullscreen().catch(() => { /* egal, Overlay geht trotzdem */ });
+      // Vollbild nur beenden, wenn unser Host das Vollbild-Element ist - war
+      // vorher etwas anderes im Vollbild (z. B. ein Video), bleibt das so.
+      if (this.isFullscreen() && typeof document.exitFullscreen === 'function') {
+        const leaving = document.exitFullscreen();
+        if (leaving && typeof leaving.catch === 'function') leaving.catch(() => {});
       }
-      this._ownsFullscreen = false;
 
       document.documentElement.style.overflow = this._prevOverflow || '';
       if (!this.finished) this.reportProgress();

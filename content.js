@@ -40,8 +40,22 @@
 
   // --- 1. Textquelle -------------------------------------------------------
 
-  /** Markierter Text, falls vorhanden (mehr als ein paar Zeichen). */
+  /**
+   * Markierter Text, falls vorhanden (mehr als ein paar Zeichen).
+   *
+   * Markierungen innerhalb von <input> und <textarea> tauchen in
+   * window.getSelection() nicht zuverlaessig auf - die haben ihre eigene
+   * Auswahl. Deshalb wird das aktive Element zuerst geprueft.
+   */
   function getSelectionText() {
+    const active = document.activeElement;
+    if (active && /^(INPUT|TEXTAREA)$/.test(active.tagName)
+        && typeof active.selectionStart === 'number'
+        && active.selectionEnd > active.selectionStart) {
+      const raw = String(active.value).slice(active.selectionStart, active.selectionEnd);
+      if (raw.trim().length > 20) return raw;
+    }
+
     const sel = window.getSelection && window.getSelection();
     if (!sel || sel.isCollapsed) return '';
     const raw = sel.toString();
@@ -119,6 +133,15 @@
 
   // --- 2. Tokenisierung ----------------------------------------------------
 
+  /*
+   * Obergrenze fuer die Wortzahl. Schuetzt vor Seiten, die faktisch ein ganzes
+   * Buch enthalten (Gesetzestexte, API-Referenzen, endlos nachladende Feeds):
+   * die Wortliste und die Chunk-Liste liegen komplett im Speicher, und ein
+   * Fortschrittsbalken ueber 300.000 Woerter ist ohnehin sinnlos.
+   * 120.000 Woerter sind bei 350 wpm knapp sechs Stunden Lesezeit.
+   */
+  const MAX_WORDS = 120000;
+
   /**
    * Zerlegt den Text in Woerter und merkt sich, wo ein Absatz endet.
    * @returns {Array<{w:string, endPara:boolean}>}
@@ -135,6 +158,10 @@
       if (!parts.length) continue;
       for (const part of parts) words.push({ w: part, endPara: false });
       words[words.length - 1].endPara = true;
+      if (words.length >= MAX_WORDS) {
+        console.warn('[FlashRead] Text bei ' + MAX_WORDS + ' Woertern abgeschnitten.');
+        break;
+      }
     }
 
     if (words.length) words[words.length - 1].endPara = true;

@@ -4,6 +4,42 @@ Alle nennenswerten Änderungen an FlashRead.
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.3] – 2026-07-27
+
+Robustheit gegenüber echten Webseiten, dazu Aufräumen. Keine neuen Funktionen,
+keine Verhaltensänderung im Normalfall.
+
+### Robuster
+- **Overlay überlebt DOM-Umbauten.** Seiten mit clientseitigem Routing oder
+  Lazy-Loading bauen ihren Body während des Lesens neu auf und entfernten den
+  Reader dabei mit. Er hängt sich jetzt selbstständig wieder ein, statt
+  unsichtbar weiterzulaufen.
+- **Tempo-Treue.** `setTimeout` feuert nie exakt; die Verspätungen summierten
+  sich über tausende Wörter. Bei 10 ms Verzug pro Wort lief der Reader 5,8 %
+  zu langsam, jetzt 0,0 %. Nach einer größeren Lücke (Tab im Hintergrund) wird
+  bewusst **nicht** aufgeholt.
+- **Obergrenze von 120.000 Wörtern.** Schützt vor Seiten, die faktisch ein
+  ganzes Buch enthalten — Wort- und Chunk-Liste liegen komplett im Speicher.
+- **Markierungen in Eingabefeldern.** Text in `<input>` und `<textarea>`
+  erscheint nicht zuverlässig in `window.getSelection()`; das aktive Element
+  wird jetzt zuerst geprüft.
+- **Vollbild beenden** nur noch, wenn der Reader selbst das Vollbild-Element
+  ist. War vorher etwas anderes im Vollbild, bleibt das unangetastet.
+
+### Schlanker
+- `lib/browser-polyfill.js` von 58 auf 27 Zeilen: `promisify` und `isFirefox`
+  wurden nie benutzt. Beide Engines sind in Manifest V3 Promise-basiert, ein
+  Alias genügt.
+- Toter Code entfernt: `RX.byline`, `Readability.toPlainText`,
+  `Reader.startedAt`, `Reader._ownsFullscreen`.
+- `reader.css` wird einmal pro Seite geholt statt bei jedem Öffnen.
+- `article.content` ist ein Getter. Die HTML-Serialisierung des ganzen Artikels
+  fällt nur an, wenn jemand sie abruft — FlashRead selbst braucht sie nie.
+- Textmessung pro Knoten zwischengespeichert; rund 10 % schneller
+  (6000 Absätze: 229 ms → 207 ms).
+
+Gesamt 2889 → 2540 Zeilen.
+
 ## [1.1.2] – 2026-07-27
 
 Behebt alle vier Warnungen der AMO-Validierung, soweit ohne Aufgabe der
