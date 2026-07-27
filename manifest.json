@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FlashRead",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "RSVP-Schnellleser: zeigt den Haupttext jeder Seite Wort fuer Wort an einer festen Blickachse an.",
 
   "permissions": [
@@ -56,8 +56,11 @@
 
   "browser_specific_settings": {
     "gecko": {
-      "id": "flashread@localhost",
-      "strict_min_version": "109.0"
+      "id": "flashread@subsample.github.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   }
 }

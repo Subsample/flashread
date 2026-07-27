@@ -4,6 +4,28 @@ Alle nennenswerten Änderungen an FlashRead.
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.2] – 2026-07-27
+
+Behebt alle vier Warnungen der AMO-Validierung, soweit ohne Aufgabe der
+Chrome-Kompatibilität möglich.
+
+### Behoben
+- **„Unsafe assignment to innerHTML"** (`reader.js`). Das Overlay wird jetzt
+  Knoten für Knoten über `createElement`/`textContent` aufgebaut statt über
+  eine `innerHTML`-Zuweisung. Mozillas Linter beanstandet jede solche
+  Zuweisung, auch bei konstanten Zeichenketten — und dieser Punkt stand in der
+  Einreichungs-Checkliste unter „könnte zur Ablehnung führen".
+  Gleiches gilt für `FlashReadReader.toast()`.
+- **`strict_min_version` auf 140.0 angehoben.** `data_collection_permissions`
+  gibt es erst ab Firefox 140 (Android 142); die Kombination mit 109 erzeugte
+  zwei Warnungen.
+
+### Bekannt und beabsichtigt
+- Die Warnung zu `background.service_worker` bleibt. Der Schlüssel wird von
+  Firefox ignoriert, ist aber für Chrome zwingend — er ist der Grund, warum
+  dasselbe Paket in beiden Browsern läuft. Entfernen ließe er sich nur mit
+  einem separaten Firefox-Manifest.
+
 ## [1.1.1] – 2026-07-27
 
 ### Behoben

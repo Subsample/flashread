@@ -117,13 +117,20 @@ Mozilla signiert werden.
 
 **Das musst du vorher anpassen:**
 
-1. **Add-on-ID** in `manifest.json` → `browser_specific_settings.gecko.id`.
-   Aktuell `flashread@localhost`. Ersetze das durch eine Adresse einer Domain,
-   die du kontrollierst, oder eine GUID. Die ID ist danach dauerhaft festgelegt
-   und lässt sich nicht mehr ändern.
-2. **Version** in `manifest.json`. Jeder Upload braucht eine neue, höhere
+1. **Version** in `manifest.json`. Jeder Upload braucht eine neue, höhere
    Versionsnummer.
-3. **Beschreibung und Name** — was hier steht, erscheint im Add-on-Manager.
+2. **Beschreibung und Name** — was hier steht, erscheint im Add-on-Manager.
+3. **Support-Kontakt** im Einreichungsformular. Bei *listed* ist das ein
+   Pflichtfeld (Abschnitt 5b des Distribution Agreements). Die Issues-URL des
+   Repos taugt nur, wenn das Repo öffentlich ist.
+
+Bereits gesetzt und **nicht mehr änderbar** nach der ersten Einreichung:
+
+- **Add-on-ID** `flashread@subsample.github.io` in
+  `browser_specific_settings.gecko.id`. Jedes Update muss exakt diese ID tragen.
+- **Datenerhebung** `data_collection_permissions: { required: ["none"] }` —
+  seit 3. November 2025 für alle neuen Erweiterungen Pflicht. Firefox zeigt
+  daraufhin „keine Datenerhebung" beim Installieren und auf der AMO-Seite an.
 
 **Weg über addons.mozilla.org:**
 

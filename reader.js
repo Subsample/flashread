@@ -67,6 +67,34 @@
   const RX_SENTENCE_END = /[.!?…][»"')\]]?$/;
   const RX_CLAUSE_END = /[,;:–—][»"')\]]?$/;
 
+  /**
+   * Kleiner Baum-Helfer.
+   *
+   * Das Overlay wird bewusst Knoten fuer Knoten aufgebaut statt ueber
+   * innerHTML: Mozillas Add-on-Linter meldet jede innerHTML-Zuweisung als
+   * "Unsafe assignment to innerHTML", auch bei konstanten Zeichenketten.
+   * Ueber createElement/textContent kann grundsaetzlich kein Markup aus
+   * Fremddaten interpretiert werden.
+   *
+   * @param {string} spec      "tag.klasse1.klasse2", Tag optional (Standard div)
+   * @param {*}      [children] Knoten, Zeichenkette oder Feld davon
+   * @param {object} [attrs]    weitere Attribute
+   */
+  function el(spec, children, attrs) {
+    const parts = String(spec).split('.');
+    const node = document.createElement(parts[0] || 'div');
+    if (parts.length > 1) node.className = parts.slice(1).join(' ');
+    if (attrs) {
+      for (const key of Object.keys(attrs)) node.setAttribute(key, attrs[key]);
+    }
+    const list = Array.isArray(children) ? children : (children == null ? [] : [children]);
+    for (const child of list) {
+      if (child == null) continue;
+      node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+    }
+    return node;
+  }
+
   // --------------------------------------------------------------------------
   // Reader
   // --------------------------------------------------------------------------
@@ -202,7 +230,7 @@
       const root = document.createElement('div');
       root.className = 'fr-root';
       root.tabIndex = -1;
-      root.innerHTML = Reader.template();
+      Reader.buildInto(root);
       this.shadow.appendChild(root);
 
       const $ = (sel) => this.shadow.querySelector(sel);
@@ -271,67 +299,71 @@
       }
     }
 
-    static template() {
-      return `
-        <div class="fr-head">
-          <div class="fr-brand"><span class="fr-dot"></span>FlashRead</div>
-          <div class="fr-title"></div>
-          <div class="fr-head-right">
-            <span class="fr-source"></span>
-            <button class="fr-icon-btn" data-act="fullscreen" title="Vollbild (F)">&#9974;</button>
-            <button class="fr-icon-btn" data-act="options" title="Einstellungen">&#9881;</button>
-            <button class="fr-icon-btn" data-act="close" title="Schliessen (Esc)">&#10005;</button>
-          </div>
-        </div>
+    /**
+     * Baut den Overlay-Baum Knoten fuer Knoten auf und haengt ihn an `root`.
+     * Bewusst ohne innerHTML - siehe Kommentar bei el().
+     */
+    static buildInto(root) {
+      const btn = (act, title, label) =>
+        el('button.fr-icon-btn', label, { 'data-act': act, title });
 
-        <div class="fr-stage">
-          <div class="fr-guide fr-guide-top"><i class="fr-tick"></i></div>
-          <div class="fr-word">
-            <span class="fr-before"></span><span class="fr-pivot"></span><span class="fr-after"></span>
-          </div>
-          <div class="fr-guide fr-guide-bottom"><i class="fr-tick"></i></div>
-          <div class="fr-context"></div>
-          <div class="fr-para">&para;</div>
-        </div>
+      root.appendChild(el('div.fr-head', [
+        el('div.fr-brand', [el('span.fr-dot'), 'FlashRead']),
+        el('div.fr-title'),
+        el('div.fr-head-right', [
+          el('span.fr-source'),
+          btn('fullscreen', 'Vollbild (F)', '⛶'),
+          btn('options', 'Einstellungen', '⚙'),
+          btn('close', 'Schliessen (Esc)', '✕')
+        ])
+      ]));
 
-        <div class="fr-foot">
-          <div class="fr-bar"><div class="fr-bar-fill"></div></div>
-          <div class="fr-meta">
-            <div class="fr-meta-left">
-              <button class="fr-btn" data-act="toggle"><span class="fr-state">Pause</span></button>
-              <button class="fr-btn" data-act="back" title="10 Woerter zurueck">&#8592; 10</button>
-              <button class="fr-btn" data-act="fwd" title="10 Woerter vor">10 &#8594;</button>
-            </div>
-            <div class="fr-meta-center">
-              <input class="fr-slider" type="range" min="100" max="1000" step="25" aria-label="Tempo">
-              <span class="fr-wpm">350 wpm</span>
-            </div>
-            <div class="fr-meta-right">
-              <span class="fr-pos">0 / 0</span>
-              <span class="fr-sep">&middot;</span>
-              <span class="fr-remain">0:00</span>
-            </div>
-          </div>
-          <div class="fr-hint">
-            <b>Leertaste</b> Pause/Weiter &nbsp;&middot;&nbsp;
-            <b>&#8592; &#8594;</b> 10 Woerter &nbsp;&middot;&nbsp;
-            <b>&#8593; &#8595;</b> Tempo &plusmn;25 &nbsp;&middot;&nbsp;
-            <b>F</b> Vollbild &nbsp;&middot;&nbsp;
-            <b>Esc</b> schliessen
-          </div>
-        </div>
+      root.appendChild(el('div.fr-stage', [
+        el('div.fr-guide.fr-guide-top', el('i.fr-tick')),
+        el('div.fr-word', [el('span.fr-before'), el('span.fr-pivot'), el('span.fr-after')]),
+        el('div.fr-guide.fr-guide-bottom', el('i.fr-tick')),
+        el('div.fr-context'),
+        el('div.fr-para', '¶')
+      ]));
 
-        <div class="fr-resume" hidden>
-          <div class="fr-resume-box">
-            <h2>Weiterlesen?</h2>
-            <p class="fr-resume-text"></p>
-            <div class="fr-resume-actions">
-              <button class="fr-btn fr-btn-primary" data-act="resume">Fortsetzen</button>
-              <button class="fr-btn" data-act="restart">Von vorn</button>
-            </div>
-          </div>
-        </div>
-      `;
+      const slider = el('input.fr-slider', null, {
+        type: 'range', min: '100', max: '1000', step: '25', 'aria-label': 'Tempo'
+      });
+
+      const hint = (key, text) => [el('b', key), ' ' + text + ' · '];
+
+      root.appendChild(el('div.fr-foot', [
+        el('div.fr-bar', el('div.fr-bar-fill')),
+        el('div.fr-meta', [
+          el('div.fr-meta-left', [
+            el('button.fr-btn', el('span.fr-state', 'Pause'), { 'data-act': 'toggle' }),
+            el('button.fr-btn', '← 10', { 'data-act': 'back', title: '10 Woerter zurueck' }),
+            el('button.fr-btn', '10 →', { 'data-act': 'fwd', title: '10 Woerter vor' })
+          ]),
+          el('div.fr-meta-center', [slider, el('span.fr-wpm', '350 wpm')]),
+          el('div.fr-meta-right', [
+            el('span.fr-pos', '0 / 0'),
+            el('span.fr-sep', '·'),
+            el('span.fr-remain', '0:00')
+          ])
+        ]),
+        el('div.fr-hint', [].concat(
+          hint('Leertaste', 'Pause/Weiter'),
+          hint('← →', '10 Woerter'),
+          hint('↑ ↓', 'Tempo ±25'),
+          hint('F', 'Vollbild'),
+          [el('b', 'Esc'), ' schliessen']
+        ))
+      ]));
+
+      root.appendChild(el('div.fr-resume', el('div.fr-resume-box', [
+        el('h2', 'Weiterlesen?'),
+        el('p.fr-resume-text'),
+        el('div.fr-resume-actions', [
+          el('button.fr-btn.fr-btn-primary', 'Fortsetzen', { 'data-act': 'resume' }),
+          el('button.fr-btn', 'Von vorn', { 'data-act': 'restart' })
+        ])
+      ]), { hidden: '' }));
     }
 
     applySettings() {
@@ -705,14 +737,15 @@
       const host = document.createElement('div');
       host.style.cssText = 'all:initial;position:fixed;z-index:2147483647;top:16px;right:16px;';
       const shadow = host.attachShadow({ mode: 'open' });
-      shadow.innerHTML = `
-        <style>
-          .t{font:14px/1.4 system-ui,sans-serif;background:#1c1f24;color:#f0f0f0;
-             padding:12px 16px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.45);
-             border:1px solid #33383f;max-width:340px}
-        </style>
-        <div class="t"></div>`;
-      shadow.querySelector('.t').textContent = message;
+
+      const style = document.createElement('style');
+      style.textContent =
+        '.t{font:14px/1.4 system-ui,sans-serif;background:#1c1f24;color:#f0f0f0;' +
+        'padding:12px 16px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.45);' +
+        'border:1px solid #33383f;max-width:340px}';
+      shadow.appendChild(style);
+      shadow.appendChild(el('div.t', message));
+
       (document.body || document.documentElement).appendChild(host);
       setTimeout(() => host.remove(), 4000);
     }
