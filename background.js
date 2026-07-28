@@ -39,15 +39,39 @@ function importScriptsSafe(path) {
 const api = self.FRAPI || self.browser || self.chrome;
 
 const MENU_ID = 'flashread-read';
+const MENU_ID_PDF = 'flashread-pdf';
 
 // Dateien, die in die Seite injiziert werden - Reihenfolge ist wichtig.
 const INJECT_FILES = [
   'lib/browser-polyfill.js',
   'lib/settings.js',
+  'lib/tokenize.js',
   'lib/readability.js',
   'reader.js',
   'content.js'
 ];
+
+// --- PDF --------------------------------------------------------------------
+
+/** Sieht die Adresse nach einer PDF-Datei aus? */
+function isPdfUrl(url) {
+  return !!url && /\.pdf(?:$|[?#])/i.test(url);
+}
+
+/**
+ * Oeffnet die eigene PDF-Seite in einem neuen Tab.
+ *
+ * Warum ein neuer Tab: Der eingebaute PDF-Viewer von Firefox gilt als
+ * privilegierte Browser-Oberflaeche, in der Content-Scripts grundsaetzlich
+ * nicht laufen duerfen (seit Firefox 60). Chrome sperrt seinen internen
+ * Plugin-Prozess genauso ab. An den offenen PDF-Tab kommen wir also nicht
+ * heran - wir brauchen eine eigene Seite, auf der PDF.js laufen kann.
+ */
+function openPdfViewer(url) {
+  const ziel = api.runtime.getURL('pdf-viewer.html')
+    + (url ? '?src=' + encodeURIComponent(url) : '');
+  return api.tabs.create({ url: ziel });
+}
 
 // --- Kontextmenue -----------------------------------------------------------
 
@@ -57,6 +81,13 @@ function addMenu() {
       id: MENU_ID,
       title: 'Mit FlashRead lesen',
       contexts: ['page', 'selection', 'link', 'image']
+    });
+    // Eigener Eintrag als Notausgang: greift auch dort, wo kein
+    // Content-Script laufen darf, etwa im PDF-Viewer.
+    api.contextMenus.create({
+      id: MENU_ID_PDF,
+      title: 'PDF mit FlashRead lesen',
+      contexts: ['page', 'link']
     });
   } catch (err) {
     // "duplicate id" ist harmlos - das Menue existiert dann bereits.
@@ -85,6 +116,12 @@ if (api.runtime.onStartup) api.runtime.onStartup.addListener(createMenu);
 api.action.onClicked.addListener((tab) => start(tab));
 
 api.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === MENU_ID_PDF) {
+    // Bei Rechtsklick auf einen Link dessen Ziel nehmen, sonst die Seite.
+    const url = info.linkUrl || info.pageUrl || (tab && tab.url) || null;
+    openPdfViewer(isPdfUrl(url) ? url : null);
+    return;
+  }
   if (info.menuItemId !== MENU_ID) return;
   // Hinweis: info.selectionText waere in Chrome auf ~150 Zeichen gekuerzt.
   // Deshalb liest das Content-Script die Auswahl selbst aus dem DOM.
@@ -159,6 +196,12 @@ async function start(tab) {
     return;
   }
 
+  // PDFs gar nicht erst zu injizieren versuchen - der Viewer ist gesperrt.
+  if (isPdfUrl(tab.url)) {
+    openPdfViewer(tab.url);
+    return;
+  }
+
   if (isBlockedUrl(tab.url)) {
     notifyError(tab.id, 'Diese Seite erlaubt keine Erweiterungen: ' + tab.url);
     return;
@@ -168,6 +211,15 @@ async function start(tab) {
     await ensureInjected(tab.id);
     await api.tabs.sendMessage(tab.id, { type: 'FLASHREAD_START' });
   } catch (err) {
+    // In Firefox ist tab.url mit blossem activeTab oft undefined. Schlaegt die
+    // Injektion dann fehl, kann es genauso gut der gesperrte PDF-Viewer sein
+    // wie eine interne Seite. Statt nur ein rotes "!" zu zeigen, bieten wir
+    // die PDF-Seite mit Dateiauswahl an - dort kommt man immer weiter.
+    if (!tab.url) {
+      console.debug('[FlashRead] Injektion fehlgeschlagen, Adresse unbekannt - PDF-Seite anbieten.', err);
+      openPdfViewer(null);
+      return;
+    }
     notifyError(tab.id, (err && err.message) || String(err));
   }
 }

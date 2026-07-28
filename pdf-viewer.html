@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlashRead &ndash; PDF lesen</title>
+  <link rel="stylesheet" href="pdf-viewer.css">
+</head>
+<body>
+
+<header class="head">
+  <div class="brand"><span class="dot"></span> FlashRead</div>
+  <div class="sub">PDF im Schnellleser oeffnen</div>
+</header>
+
+<main class="wrap">
+
+  <!-- Ablegen / Auswaehlen ------------------------------------------------ -->
+  <section id="drop" class="drop">
+    <div class="drop-inner">
+      <div class="drop-icon" aria-hidden="true">&#128462;</div>
+      <h1>PDF hierher ziehen</h1>
+      <p class="muted">&hellip; oder eine Datei auswaehlen. Das PDF wird nur
+        auf deinem Rechner gelesen und nirgendwohin gesendet.</p>
+      <p>
+        <button type="button" id="pick" class="btn btn-primary">Datei auswaehlen</button>
+        <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+      </p>
+      <p class="hint" id="dropHint"></p>
+    </div>
+  </section>
+
+  <!-- Fortschritt --------------------------------------------------------- -->
+  <section id="busy" class="card busy" hidden>
+    <h2 id="busyTitle">PDF wird gelesen</h2>
+    <div class="bar"><div class="bar-fill" id="busyFill"></div></div>
+    <p class="muted" id="busyText">Seite 0 von 0</p>
+  </section>
+
+  <!-- Ergebnis ------------------------------------------------------------ -->
+  <section id="done" class="card" hidden>
+    <h2 id="doneTitle">Bereit</h2>
+    <p class="muted" id="doneMeta"></p>
+    <div class="preview" id="preview"></div>
+    <div class="actions">
+      <button type="button" id="start" class="btn btn-primary">Lesen starten</button>
+      <button type="button" id="again" class="btn">Anderes PDF</button>
+    </div>
+  </section>
+
+  <!-- Fehler -------------------------------------------------------------- -->
+  <section id="error" class="card error" hidden>
+    <h2>Das hat nicht geklappt</h2>
+    <p id="errorText"></p>
+    <div class="actions">
+      <button type="button" id="grant" class="btn btn-primary" hidden>Zugriff erlauben</button>
+      <button type="button" id="retry" class="btn" hidden>Erneut versuchen</button>
+      <button type="button" id="fallback" class="btn">Datei stattdessen auswaehlen</button>
+    </div>
+  </section>
+
+  <p class="foot muted">
+    PDF-Text wird mit <b>PDF.js</b> von Mozilla gelesen &ndash; derselben
+    Bibliothek, die Firefox fuer seine eigene PDF-Anzeige benutzt. Sie liegt
+    lokal im Erweiterungspaket, es wird nichts nachgeladen.
+  </p>
+</main>
+
+<script src="lib/browser-polyfill.js"></script>
+<script src="lib/settings.js"></script>
+<script src="lib/tokenize.js"></script>
+<script src="reader.js"></script>
+<script type="module" src="pdf-viewer.js"></script>
+</body>
+</html>

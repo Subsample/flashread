@@ -4,6 +4,48 @@ Alle nennenswerten Änderungen an FlashRead.
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.2.1] – 2026-07-28
+
+### Neu
+- **PDF-Dateien lesen.** Auf einem PDF öffnet FlashRead einen neuen Tab mit
+  einer eigenen Seite; dort lässt sich die Datei auch hineinziehen oder
+  auswählen. Gelesen wird mit **PDF.js 6.1.200** von Mozilla, das lokal im
+  Paket liegt — es wird nichts nachgeladen.
+
+  Der neue Tab ist keine Bequemlichkeit: Firefox' eingebauter PDF-Viewer gilt
+  als privilegierte Browser-Oberfläche, in der Erweiterungen seit Firefox 60
+  grundsätzlich nicht laufen dürfen — unabhängig von jeder Berechtigung
+  ([Bugzilla 1454760](https://bugzilla.mozilla.org/show_bug.cgi?id=1454760)).
+  Chrome sperrt seinen Plugin-Prozess genauso ab.
+
+- **Textgewinnung in vier Stufen.** PDF kennt weder Zeilen noch Absätze,
+  sondern nur Textfragmente mit Koordinaten. Daraus werden Zeilen gruppiert,
+  Spalten erkannt und nacheinander ausgegeben, wiederkehrende Kolumnentitel
+  und Seitenzahlen entfernt, und schließlich Absätze anhand von Zeilenabstand,
+  Zeilenlänge und Einrückung gebildet — samt Auflösen der Silbentrennung.
+
+- **Zweiter Kontextmenü-Eintrag** „PDF mit FlashRead lesen" als Notausgang für
+  Stellen, an denen kein Content-Script laufen darf.
+
+- **Erkennung fehlender Textebene.** Bei eingescannten PDFs oder solchen, deren
+  Schrift in Vektorpfade umgewandelt wurde, gibt es keine Zeichen zu lesen.
+  FlashRead prüft auf unter 25 Wörter je Seite und erklärt dann konkret, was
+  los ist — mit Gegenprobe und beiden Auswegen, statt eine Handvoll
+  Listennummern als Text auszugeben.
+
+### Geändert
+- Die Tokenisierung liegt jetzt in `lib/tokenize.js`, weil Webseiten-Reader und
+  PDF-Viewer dieselbe brauchen.
+- `optional_host_permissions` statt fester Host-Rechte: Im
+  Installationsdialog erscheint nichts Zusätzliches. Erst wenn ein PDF direkt
+  von einer Adresse geladen werden soll, fragt FlashRead per Knopfdruck — und
+  dann nur für diese eine Herkunft.
+
+### Hinweis zur Paketgröße
+45 KB → 3,1 MB. Das ist PDF.js. Immerhin in der **unminifizierten** Fassung,
+also lesbarer Quelltext — eine separate Quellcode-Einreichung bei AMO entfällt
+dadurch.
+
 ## [1.1.4] – 2026-07-27
 
 ### Einstellungen
@@ -134,6 +176,7 @@ Erste Fassung.
 - Ein Paket für Chrome und Firefox (Manifest V3), keine Build-Tools,
   keine externen Requests, keine Telemetrie.
 
+[1.2.1]: https://github.com/Subsample/flashread/releases/tag/v1.2.1
 [1.1.4]: https://github.com/Subsample/flashread/releases/tag/v1.1.4
 [1.1.3]: https://github.com/Subsample/flashread/releases/tag/v1.1.3
 [1.1.1]: https://github.com/Subsample/flashread/releases/tag/v1.1.1

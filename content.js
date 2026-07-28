@@ -25,7 +25,7 @@
   // Alle injizierten Dateien muessen sich im selben Global wiederfinden.
   // Schlaegt das fehl, wuerde weiter unten ein nichtssagender TypeError
   // fliegen - deshalb hier eine klare Meldung.
-  const fehlt = ['FRAPI', 'FRSettings', 'Readability', 'FlashReadReader']
+  const fehlt = ['FRAPI', 'FRSettings', 'FRTokenize', 'Readability', 'FlashReadReader']
     .filter((name) => !globalThis[name]);
   if (!api || fehlt.length) {
     console.error('[FlashRead] Abhaengigkeiten nicht gefunden:', fehlt.join(', ') || '(keine API)',
@@ -132,41 +132,8 @@
   }
 
   // --- 2. Tokenisierung ----------------------------------------------------
-
-  /*
-   * Obergrenze fuer die Wortzahl. Schuetzt vor Seiten, die faktisch ein ganzes
-   * Buch enthalten (Gesetzestexte, API-Referenzen, endlos nachladende Feeds):
-   * die Wortliste und die Chunk-Liste liegen komplett im Speicher, und ein
-   * Fortschrittsbalken ueber 300.000 Woerter ist ohnehin sinnlos.
-   * 120.000 Woerter sind bei 350 wpm knapp sechs Stunden Lesezeit.
-   */
-  const MAX_WORDS = 120000;
-
-  /**
-   * Zerlegt den Text in Woerter und merkt sich, wo ein Absatz endet.
-   * @returns {Array<{w:string, endPara:boolean}>}
-   */
-  function tokenize(text) {
-    const words = [];
-    const paragraphs = String(text)
-      .replace(/­/g, '')          // weiche Trennstriche entfernen
-      .replace(/\r/g, '')
-      .split(/\n{2,}|\n/);
-
-    for (const paragraph of paragraphs) {
-      const parts = paragraph.split(/\s+/).filter(Boolean);
-      if (!parts.length) continue;
-      for (const part of parts) words.push({ w: part, endPara: false });
-      words[words.length - 1].endPara = true;
-      if (words.length >= MAX_WORDS) {
-        console.warn('[FlashRead] Text bei ' + MAX_WORDS + ' Woertern abgeschnitten.');
-        break;
-      }
-    }
-
-    if (words.length) words[words.length - 1].endPara = true;
-    return words;
-  }
+  // Liegt in lib/tokenize.js, weil der PDF-Viewer dieselbe Zerlegung braucht.
+  const tokenize = globalThis.FRTokenize;
 
   // --- 3. Ablauf -----------------------------------------------------------
 

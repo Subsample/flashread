@@ -61,6 +61,40 @@ löst ihn beim ersten Tastendruck oder Klick ein — praktisch sofort.
 
 ---
 
+## PDF lesen
+
+Auf einem PDF öffnet FlashRead einen **neuen Tab** mit einer eigenen Seite.
+Dort kannst du die Datei auch direkt hineinziehen oder auswählen.
+
+Der Umweg ist nicht Bequemlichkeit, sondern Notwendigkeit: Firefox' eingebauter
+PDF-Viewer gilt als privilegierte Browser-Oberfläche, in der Erweiterungen
+grundsätzlich nicht laufen dürfen — seit Firefox 60, unabhängig von jeder
+Berechtigung. Chrome sperrt seinen Plugin-Prozess genauso ab. An den offenen
+PDF-Tab kommt keine Erweiterung heran.
+
+Gelesen wird mit **PDF.js** von Mozilla, derselben Bibliothek, die Firefox für
+seine PDF-Anzeige benutzt. Sie liegt lokal im Paket, es wird nichts nachgeladen.
+
+Die Textgewinnung läuft in vier Stufen: Textfragmente nach Koordinaten zu Zeilen
+gruppieren, Spalten erkennen und nacheinander ausgeben, wiederkehrende
+Kolumnentitel und Seitenzahlen entfernen, dann Absätze anhand von Zeilenabstand,
+Zeilenlänge und Einrückung bilden — inklusive Auflösen der Silbentrennung am
+Zeilenende.
+
+**Berechtigungen:** Dateiauswahl und Hineinziehen brauchen keine. Nur wenn ein
+PDF direkt von einer Adresse geladen werden soll, fragt FlashRead per Knopfdruck
+nach Lesezugriff — und dann nur für diese eine Herkunft. Im
+Installationsdialog taucht dadurch nichts Zusätzliches auf.
+
+**Was nicht geht:** PDFs ohne Textebene. Bei eingescannten Dokumenten oder
+solchen, deren Schrift in Vektorpfade umgewandelt wurde (typisch, wenn ein
+Dokument „gedruckt" statt exportiert wurde), gibt es schlicht keine Zeichen zu
+lesen. FlashRead erkennt das und sagt es. Gegenprobe: Lässt sich im Browser kein
+Satz mit der Maus markieren, ist genau das der Fall. Abhilfe wäre eine
+Texterkennung — die bringt FlashRead nicht mit.
+
+---
+
 ## Einstellungen
 
 Zahnrad im Overlay, oder `chrome://extensions` → *Details* → *Optionen*.
