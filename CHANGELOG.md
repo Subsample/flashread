@@ -4,6 +4,31 @@ Alle nennenswerten Änderungen an FlashRead.
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.2.2] – 2026-07-28
+
+### Behoben
+- **Android-Warnung der AMO-Validierung.** `data_collection_permissions` gibt
+  es auf Firefox für Android erst ab Version 142, `strict_min_version` stand
+  aber auf 140. Ergänzt um `browser_specific_settings.gecko_android` mit
+  `strict_min_version: "142.0"`.
+
+  Nebenwirkung: FlashRead ist damit auch auf **Firefox für Android ab 142**
+  verfügbar. Ohne diesen Schlüssel wäre es ausschließlich für den Desktop
+  freigegeben. Die Bedienung per Fingertipp funktioniert (Knöpfe und
+  Tempo-Regler in der Fußzeile), die Tastenkürzel naturgemäß nicht.
+
+### Bekannt und unveränderbar
+- Zwei Warnungen „Unsafe call to import for argument 0" stammen aus **PDF.js
+  selbst** (`pdf.mjs`, `pdf.worker.mjs`). Es handelt sich um dynamische
+  `import()`-Aufrufe mit einer Variablen als Argument:
+  - eine Notfallroute, die den Worker nachlädt, falls der Browser keine echten
+    Worker anbietet — bei uns eine erweiterungsinterne Adresse;
+  - ein WASM-Modul zur Bilddekodierung, das nie geladen wird, weil FlashRead
+    keine WASM-Dateien mitliefert und keine Bilder rendert.
+
+  Mozillas Richtlinie untersagt Änderungen an Fremdbibliotheken, die Warnungen
+  bleiben deshalb bestehen.
+
 ## [1.2.1] – 2026-07-28
 
 ### Neu
